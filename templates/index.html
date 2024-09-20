@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Eletrônico</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='images/soco-relogio.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-red-600">Ponto Eletrônico</h1>
+            <ul class="flex space-x-4">
+                <li><a href="{{ url_for('conta') }}" class="text-gray-700 hover:text-red-600">Conta</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow container mx-auto px-4 py-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <!-- Informação sobre o novo dia -->
+            <div id="message" data-new-day="{{ is_new_day }}"></div>
+
+            <!-- Irformação do usuario -->
+            <div class="mb-4">
+                <p class="text-lg font-bold">Nome: <span class="font-normal">{{ username }}</span></p>
+                <p class="text-lg font-bold">ID: <span class="font-normal">{{ user_id }}</span></p>
+            </div>
+
+            <!-- Labels para Point Data -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                {% for label, data, color, image in [
+                    ('Entrada', 'entrada', 'green-400', 'entrada.png'),
+                    ('Pausa', 'pausa', 'blue-400', 'xicara-cheia.png'),
+                    ('Retorno', 'retorno', 'yellow-400', 'xicara-vazia.png'),
+                    ('Saída', 'saida', 'red-400', 'saida.png')
+                ] %}
+                <div class="text-center bg-{{ color }} p-4 rounded-lg">
+                    <img src="{{ url_for('static', filename='images/' ~ image) }}" alt="{{ label }}" class="w-12 h-12 mx-auto">
+                    <div class="font-semibold mt-2">{{ label }}:</div>
+                    <div>{{ point_data[data] if point_data[data] != 'Não registrado' else 'Não registrado' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Relógio -->
+            <div id="clock" class="text-center text-2xl font-bold mb-6"></div>
+
+            <!-- Botão para registrar ponto -->
+            <div class="text-center">
+                {% if can_register %}
+                    <form id="registro-form" action="{{ url_for('registrar_ponto') }}" method="post">
+                        <input type="hidden" name="tipo_registro" id="tipo_registro" value="entrada">
+                        <input type="hidden" name="hora_registro" id="hora_registro">
+                        <button type="submit" id="registrar-button" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none">
+                            Registrar Entrada
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="text-red-600 font-semibold">Você atingiu o limite de registros para hoje.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-4 shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 Ponto Eletrônico. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='scripts/index.js') }}"></script>
+    <script>
+        // Toggle menu visibility
+        document.getElementById('menu-button').addEventListener('click', function() {
+            var menu = document.getElementById('menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Capturar a hora no front-end
+        document.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                const currentTime = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+                const inputHoraRegistro = this.querySelector('input[name="hora_registro"]');
+                inputHoraRegistro.value = currentTime;
+            });
+        });
+
+        // Exibir o relógio
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
